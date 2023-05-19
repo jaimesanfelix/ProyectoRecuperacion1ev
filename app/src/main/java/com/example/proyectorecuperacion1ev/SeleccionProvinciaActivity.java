@@ -3,6 +3,7 @@ package com.example.proyectorecuperacion1ev;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.RadioGroup;
@@ -21,6 +22,8 @@ public class SeleccionProvinciaActivity extends AppCompatActivity {
 
     private RadioGroup rgFiltroProvincia;
 
+    private MediaPlayer mediaPlayer;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -34,6 +37,11 @@ public class SeleccionProvinciaActivity extends AppCompatActivity {
 
         findViewById(R.id.bt_aceptar).setOnClickListener(this::onAceptar);
 
+        mediaPlayer = MediaPlayer.create(this, R.raw.himne);
+        mediaPlayer.setLooping(true);
+        mediaPlayer.setVolume(0.5f, 0.5f);
+        mediaPlayer.seekTo(0);
+        mediaPlayer.start();
     }
 
     private void onAceptar(View view){
@@ -45,6 +53,12 @@ public class SeleccionProvinciaActivity extends AppCompatActivity {
 
         this.finish();
 
+    }
+
+    @Override
+    protected void onPause() {
+        mediaPlayer.stop();
+        super.onPause();
     }
 
     private void inicializarFiltro(){

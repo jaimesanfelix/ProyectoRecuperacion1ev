@@ -51,6 +51,9 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvPoblacion;
     private TextView tvLatitud;
     private TextView tvLongitud;
+    private TextView tvClima;
+    private TextView tvTemperatura;
+    private TextView tvVelocidadViento;
     private LocationManager locationManager = null;
     private LocationListener locationListener;
 
@@ -68,13 +71,17 @@ public class MainActivity extends AppCompatActivity {
         tvPoblacion = findViewById(R.id.tv_poblacion);
         tvLatitud = findViewById(R.id.tv_latitud);
         tvLongitud = findViewById(R.id.tv_longitud);
+        tvClima = findViewById(R.id.tv_clima);
+        tvTemperatura = findViewById(R.id.tv_temperatura);
+        tvVelocidadViento = findViewById(R.id.tv_velocidadViento);
         configurarSpinnerComarcasListener();
+        configurarPoliticaThreads();
+        pedirPermisoInternet();
         iniciarLocalizacion();
     }
 
     private void iniciarLocalizacion() {
 
-        configurarPoliticaThreads();
         pedirPermisosLocalizacion();
         inicializarLocationManager();
         inicializarInfoGps();
@@ -124,13 +131,24 @@ public class MainActivity extends AppCompatActivity {
         double latitud = localizacion.getLatitude();
         double longitud = localizacion.getLongitude();
         actualizarIULocalizacionGps(latitud, longitud);
-
+        MeteorologiaWS meteo = new MeteorologiaWS();
+        meteo.consultarDatosMeteo((float) latitud, (float) longitud);
+        float temperatura = meteo.getTemperatura();
+        float velocidadViento = meteo.getVelocidadViento();
+        actualizarIUMeteorlogiaGPS(temperatura, velocidadViento);
     }
 
     private void actualizarIULocalizacionGps(double latitud, double longitud) {
 
         tvLatitud.setText(String.format("%.4f", latitud));
         tvLongitud.setText(String.format("%.4f", longitud));
+
+    }
+
+    private void actualizarIUMeteorlogiaGPS(float temperatura, float velocidadViento){
+
+        String texto = String.format("Temperatura: %.1f ºC, Velocidad del viento: %.1f Km/h", temperatura, velocidadViento);
+        tvClima.setText(texto);
 
     }
 
@@ -164,6 +182,14 @@ public class MainActivity extends AppCompatActivity {
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
 
+    }
+
+    private void pedirPermisoInternet(){
+        if (ContextCompat. checkSelfPermission(this,
+                Manifest.permission.INTERNET)
+                != PackageManager.PERMISSION_GRANTED)
+            ActivityCompat.requestPermissions(this, new
+                    String[]{Manifest.permission.INTERNET}, 0);
     }
 
     private void encenderListenerLocalizacion() {
@@ -215,6 +241,7 @@ public class MainActivity extends AppCompatActivity {
     public void onNavegar(View view){
 
        String comarca = getComarcaSeleccionada();
+        Toast.makeText(this,"Navegando a " + getComarcaSeleccionada(), Toast.LENGTH_SHORT).show();
        navegarComarca(comarca);
 
     }
@@ -226,7 +253,6 @@ public class MainActivity extends AppCompatActivity {
         navegar(comarcaUrl);
 
     }
-
 
 
     private void navegar(String url) {
@@ -259,6 +285,8 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+
+
     private int provinciaFiltro = SeleccionProvinciaActivity.TODAS;
     private static final int REQUEST_CODE = 1;
 
@@ -267,6 +295,8 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(this, SeleccionProvinciaActivity.class);
 
         intent.putExtra(SeleccionProvinciaActivity.PROVINCIA, provinciaFiltro);
+
+        Toast.makeText(this,"Seleccionando provincia", Toast.LENGTH_SHORT).show();
 
         startActivityForResult(intent, REQUEST_CODE);
 
@@ -403,9 +433,15 @@ public class MainActivity extends AppCompatActivity {
             float latitud = cursor.getFloat(4);
             float longitud = cursor.getFloat(5);
             cursor.close();
+            MeteorologiaWS meteo = new MeteorologiaWS();
+            meteo.consultarDatosMeteo(latitud, longitud);
+            float temperatura = meteo.getTemperatura();
+            float velocidadViento = meteo.getVelocidadViento();
             tvProvincia.setText(provincia);
             tvCapital.setText(capital);
             tvPoblacion.setText(Integer.toString(poblacion));
+            tvTemperatura.setText(Float.toString(temperatura) + " ºC");
+            tvVelocidadViento.setText(Float.toString(velocidadViento) + " Km/h");
         }
 
 
@@ -480,6 +516,7 @@ public class MainActivity extends AppCompatActivity {
         repoblarBBDD();
         cargarSpinnerComarcas();
         seleccionarComarca(comarcaPreferida);
+        Toast.makeText(this,"Base de datos repoblada", Toast.LENGTH_SHORT).show();
 
     }
 
